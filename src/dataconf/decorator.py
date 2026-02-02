@@ -11,8 +11,10 @@ from typing import (
     runtime_checkable,
 )
 
+from .state import _registry as registry
+
 if TYPE_CHECKING:
-    from src.dataconf.parser import ConfigParser
+    from .parser import ConfigParser
 
 
 class FieldDeserializer(Protocol):
@@ -61,6 +63,9 @@ def _apply_config[_T](  # noqa: UP049
         field_deserialzers=field_deserialzers or {},
         field_serializers=field_serializers or {},
     )
+
+    registry.register(cls.__name__, cast(type[ConfigclassInstance[_T]], cls))
+
     return cast(type[ConfigclassInstance[_T]], cls)
 
 
