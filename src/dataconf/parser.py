@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import MISSING, fields, is_dataclass
+from os import name
 from pathlib import Path
 import types
 from typing import Any, TypeVar, Union, cast, get_args, get_origin
@@ -106,6 +107,9 @@ class ConfigParser:
 
     def _get_root_configs(self) -> list[type[ConfigclassInstance]]:
         all_configs = registry.get_all_registered()
+        all_configs = sorted(
+            all_configs, key=lambda cls: (0 if cls.__config__.top_level else 1, cls.__config__.name.casefold())
+        )
         nested_configs = set[type[ConfigclassInstance]]()
         for config_class in all_configs:
             for field in fields(config_class):
