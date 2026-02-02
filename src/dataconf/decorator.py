@@ -84,39 +84,3 @@ def configclass[_T](  # noqa: UP049
         )
 
     return decorator
-
-
-# def get_all_registered() -> list[type]:
-#     return list(_REGISTRY.keys())
-#
-#
-# def is_registered(config_class: type) -> bool:
-#     return config_class in _REGISTRY
-#
-#
-# def is_top_level(config_class: type) -> bool:
-#     return _REGISTRY[config_class][0]
-#
-#
-# def get_section_name(config_class: type) -> str:
-#     if not is_registered(config_class):
-#         raise ValueError(f"Config class {config_class.__name__} is not registered")
-#     return _REGISTRY[config_class][1]
-#
-#
-# def get_field_mappings(config_class: type) -> dict[str, str]:
-#     if not is_registered(config_class):
-#         raise ValueError(f"Config class {config_class.__name__} is not registered")
-#     return _REGISTRY[config_class][2]
-#
-#
-# def get_field_deserialzers(config_class: type) -> dict[str, FieldParser]:
-#     if not is_registered(config_class):
-#         raise ValueError(f"Config class {config_class.__name__} is not registered")
-#     return _REGISTRY[config_class][3]
-#
-#
-# def get_field_serializers(config_class: type) -> dict[str, FieldSerializer]:
-#     if not is_registered(config_class):
-#         raise ValueError(f"Config class {config_class.__name__} is not registered")
-#     return _REGISTRY[config_class][4]
