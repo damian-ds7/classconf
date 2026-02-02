@@ -8,6 +8,7 @@ from .decorator import ConfigclassInstance
 from .format.config_format import ConfigFormat
 from .format.toml_format import TOMLFormat
 from .state import _registry as registry
+from .utils import is_configclass_type
 
 T = TypeVar("T", bound=ConfigclassInstance)
 
@@ -109,7 +110,8 @@ class ConfigParser:
         for config_class in all_configs:
             for field in fields(config_class):
                 field_type = ConfigParser._unwrap_optional(field.type)
-                nested_configs.add(field_type)
+                if is_configclass_type(field_type):
+                    nested_configs.add(field_type)
 
         return [c for c in all_configs if c not in nested_configs]
 
