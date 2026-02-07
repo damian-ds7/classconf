@@ -173,19 +173,13 @@ class ConfigParser:
         return [c for c in self._configs if c not in nested_configs]
 
     def _convert_field_value(self, value: Any, field_type: type) -> Any:
+        if value is None:
+            return None
         if is_dataclass(field_type):
             return self._parse_config(cast(type[ConfigClass], field_type), value)
-        elif field_type is bool and not isinstance(value, bool):
-            return self._parse_bool(value)
         elif isinstance(field_type, type) and not isinstance(value, field_type):
             return field_type(value)
         return value
-
-    @staticmethod
-    def _parse_bool(value: Any) -> bool:
-        if isinstance(value, str):
-            return value.lower() in ("true", "1", "yes")
-        return bool(value)
 
     def _parse_config(
         self, config_class: type[ConfigClass[T]], section_data: dict[str, Any]
