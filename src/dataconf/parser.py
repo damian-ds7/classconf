@@ -8,16 +8,9 @@ from .format.config_format import ConfigFormat
 from .format.toml_format import TOMLFormat
 from .types import ConfigClass
 from .utils import is_configclass_type
+from .exceptions import MultipleTopLevelConfigError, InvalidConfigClassError
 
 T = TypeVar("T")
-
-
-class InvalidConfigClassError(TypeError):
-    pass
-
-
-class MultipleTopLevelConfigError(TypeError):
-    pass
 
 
 class ConfigParser:
