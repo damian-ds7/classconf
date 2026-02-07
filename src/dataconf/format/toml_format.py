@@ -5,9 +5,10 @@ import rtoml
 
 
 class TOMLFormat:
+    """Read and write TOML configuration files."""
+
     def __init__(self, none_value: str | None = "null") -> None:
         """
-        Read and write TOML configuration files.
         Args:
             none_value: controls how `None` values are serialized.
                 `none_value=None` means `None` values are ignored.
