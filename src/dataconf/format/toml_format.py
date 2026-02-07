@@ -5,8 +5,6 @@ import rtoml
 
 
 class TOMLFormat:
-    extension = ".toml"
-
     def read(self, path: Path) -> dict[str, dict[str, Any]] | None:
         if not path.exists():
             return None
