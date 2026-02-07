@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class FieldDeserializer(Protocol):
-    def __call__(self, value: Any, *, parser: ConfigParser = ...) -> Any: ...
+    def __call__(self, value: Any, /, *, parser: ConfigParser = ...) -> Any: ...
 
 
 type FieldSerializer = Callable[[Any], Any]
