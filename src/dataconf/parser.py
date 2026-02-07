@@ -17,6 +17,8 @@ class InvalidConfigClassError(TypeError):
 
 
 class ConfigParser:
+    """Parse config files into registered dataclasses."""
+
     def __init__(
         self,
         config_path: Path | str,
@@ -24,14 +26,22 @@ class ConfigParser:
         create_noexist: bool = False,
         format: ConfigFormat | None = None,
     ) -> None:
+        """
+        Args:
+            config_path: path to the config file.
+            *configs: config classes to include in this parser.
+            create_noexist: if True, write defaults when missing.
+            format: file format handler (defaults to TOML).
+        """
+
         if format is None:
             format = TOMLFormat()
-        base_path = Path(config_path)
+        config_path = Path(config_path)
 
-        if not create_noexist and not base_path.exists():
+        if not create_noexist and not config_path.exists():
             raise FileNotFoundError("Provided config file does not exist")
 
-        self._config_path = base_path.with_suffix(format.extension)
+        self._config_path = config_path
         self._format = format
 
         invalid_configs = [cls for cls in configs if not is_configclass_type(cls)]
