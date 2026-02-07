@@ -1,8 +1,14 @@
+from abc import ABC
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
 
-class ConfigFormat(Protocol):
+from abc import abstractmethod
+
+
+class ConfigFormat(ABC):
+    @abstractmethod
     def read(self, path: Path) -> dict[str, Any] | None: ...
 
+    @abstractmethod
     def write(self, path: Path, data: dict[str, Any]) -> None: ...

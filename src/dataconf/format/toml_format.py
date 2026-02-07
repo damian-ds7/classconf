@@ -3,8 +3,10 @@ from typing import Any
 
 import rtoml
 
+from .config_format import ConfigFormat
 
-class TOMLFormat:
+
+class TOMLFormat(ConfigFormat):
     """Read and write TOML configuration files."""
 
     def __init__(self, none_value: str | None = "null") -> None:
