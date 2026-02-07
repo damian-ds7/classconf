@@ -9,14 +9,18 @@ from .format.toml_format import TOMLFormat
 from .types import ConfigClass
 from .utils import is_configclass_type
 
-T = TypeVar("T", bound=ConfigClass)
+T = TypeVar("T")
+
+
+class InvalidConfigClassError(TypeError):
+    pass
 
 
 class ConfigParser:
     def __init__(
         self,
         config_path: Path | str,
-        *configs: type[ConfigClass[Any]],
+        *configs: type[Any],
         create_noexist: bool = False,
         format: ConfigFormat | None = None,
     ) -> None:
@@ -29,8 +33,17 @@ class ConfigParser:
 
         self._config_path = base_path.with_suffix(format.extension)
         self._format = format
+
+        invalid_configs = [cls for cls in configs if not is_configclass_type(cls)]
+        if invalid_configs:
+            invalid_names = ", ".join(cls.__name__ for cls in invalid_configs)
+            raise InvalidConfigClassError(
+                f"Config classes must use @configclass: {invalid_names}"
+            )
+
+        typed_configs = cast(list[type[ConfigClass[Any]]], list(configs))
         self._configs = sorted(
-            configs,
+            typed_configs,
             key=lambda cls: (
                 0 if cls.__config__.top_level else 1,
                 cls.__config__.name.casefold(),
@@ -147,12 +160,9 @@ class ConfigParser:
             return value.lower() in ("true", "1", "yes")
         return bool(value)
 
-    def _parse_config(self, config_class: type[T], section_data: dict[str, Any]) -> T:
-        if config_class not in self._configs:
-            raise ValueError(
-                f"Config class {config_class.__name__} was not provided to this parser"
-            )
-
+    def _parse_config(
+        self, config_class: type[ConfigClass[T]], section_data: dict[str, Any]
+    ) -> T:
         field_mappings = config_class.__config__.field_mappings
         field_deserializers = config_class.__config__.field_deserialzers
         kwargs = {}
@@ -173,7 +183,7 @@ class ConfigParser:
 
             kwargs[field.name] = value
 
-        return config_class(**kwargs)
+        return cast(T, config_class(**kwargs))
 
     def get(self, config_class: type[T]) -> T:
         """
@@ -184,10 +194,18 @@ class ConfigParser:
             logger_config = parser.get(LoggerConfig)
             img_config = parser.get(ImageProcessingConfig)
         """
-        section_name = config_class.__config__.name
+
+        if config_class not in self._configs:
+            raise ValueError(
+                f"Config class {config_class.__name__} was not provided to this parser"
+            )
+
+        cast_class = cast(type[ConfigClass[T]], config_class)
+
+        section_name = cast_class.__config__.name
 
         if section_name not in self._config:
             raise ValueError(f"Missing {section_name} configuration from config file")
 
         section_data = self._config[section_name]
-        return self._parse_config(config_class, section_data)
+        return self._parse_config(cast_class, section_data)
