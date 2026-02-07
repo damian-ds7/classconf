@@ -86,9 +86,6 @@ class ConfigParser:
             key = field_mappings.get(field.name, field.name)
             value = ConfigParser._get_field_default_value(field)
 
-            if value is None:
-                continue
-
             value = ConfigParser._serialize_field_value(
                 value, field.name, field_serializers
             )
@@ -110,7 +107,7 @@ class ConfigParser:
                     cast(type[ConfigClass], field_type)
                 )
             else:
-                return "No default value exists, needs to be provided manually"
+                return None
 
     @staticmethod
     def _serialize_field_value(

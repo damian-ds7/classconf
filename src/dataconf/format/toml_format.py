@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import Any
 
-import tomli_w
-import tomllib
+import rtoml
 
 
 class TOMLFormat:
@@ -12,9 +11,7 @@ class TOMLFormat:
         if not path.exists():
             return None
 
-        with open(path, "rb") as f:
-            return tomllib.load(f)
+        return rtoml.load(path, none_value="null")
 
     def write(self, path: Path, data: dict[str, dict[str, Any]]) -> None:
-        with open(path, "wb") as f:
-            return tomli_w.dump(data, f)
+        rtoml.dump(data, path, none_value="null")
