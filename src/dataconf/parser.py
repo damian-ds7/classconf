@@ -195,11 +195,6 @@ class ConfigParser:
     def get(self, config_class: type[T]) -> T:
         """
         Generic method to get any registered config.
-
-        Example:
-            parser = ConfigParser()
-            logger_config = parser.get(LoggerConfig)
-            img_config = parser.get(ImageProcessingConfig)
         """
 
         if config_class not in self._configs:
