@@ -82,7 +82,7 @@ class ConfigParser:
             ),
         )
 
-    def _read_config(self) -> dict[str, dict[str, Any]]:
+    def _read_config(self) -> dict[str, Any]:
         config_data = self._format.read(self._config_path)
         if config_data is None:
             return self._create_default_config()
@@ -90,12 +90,16 @@ class ConfigParser:
         return config_data
 
     def _create_default_config(self) -> dict[str, Any]:
-        config_data: dict[str, dict[str, Any]] = {}
+        config_data: dict[str, Any] = {}
 
         for config_class in self._get_root_configs():
-            section_name = config_class.__config__.name
             config_class_data = ConfigParser._get_class_fields(config_class)
-            config_data[section_name] = config_class_data
+
+            if config_class.__config__.top_level:
+                config_data = config_data | config_class_data
+            else:
+                section_name = config_class.__config__.name
+                config_data[section_name] = config_class_data
 
         self._format.write(self._config_path, config_data)
 
@@ -107,11 +111,8 @@ class ConfigParser:
     ) -> dict[str, Any]:
         class_data: dict[str, Any] = {}
 
-        field_mappings = {}
-        field_serializers = {}
-        if config_class.__config__ is not None:
-            field_mappings = config_class.__config__.field_mappings
-            field_serializers = config_class.__config__.field_serializers
+        field_mappings = config_class.__config__.field_mappings
+        field_serializers = config_class.__config__.field_serializers
 
         for field in fields(config_class):
             key = field_mappings.get(field.name, field.name)
@@ -144,8 +145,6 @@ class ConfigParser:
     def _serialize_field_value(
         value: Any, field_name: str, field_serializers: Mapping[str, Any]
     ) -> Any:
-        if value is None:
-            return None
         if field_name in field_serializers:
             return field_serializers[field_name](value)
         elif isinstance(value, Path):
@@ -199,7 +198,9 @@ class ConfigParser:
             key = field_mappings.get(field.name, field.name)
 
             if key not in section_data:
-                continue
+                raise KeyError(
+                    f"Missing config key '{key}' for '{config_class.__name__}'"
+                )
 
             value = section_data[key]
 
@@ -228,10 +229,14 @@ class ConfigParser:
 
         cast_class = cast(type[ConfigClass[T]], config_class)
 
+        if cast_class.__config__.top_level:
+            config_data = self._config
+            return self._parse_config(cast_class, config_data)
+
         section_name = cast_class.__config__.name
+        config_data = self._config[section_name]
 
         if section_name not in self._config:
             raise ValueError(f"Missing {section_name} configuration from config file")
 
-        section_data = self._config[section_name]
-        return self._parse_config(cast_class, section_data)
+        return self._parse_config(cast_class, config_data)
