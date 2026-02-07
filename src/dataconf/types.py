@@ -16,7 +16,7 @@ _T_co = TypeVar("_T_co", covariant=True)
 
 
 @runtime_checkable
-class ConfigclassInstance(Protocol[_T_co]):
+class ConfigClass(Protocol[_T_co]):
     __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
     __config__: ClassVar[ConfigSpec]
 

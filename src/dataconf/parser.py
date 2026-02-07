@@ -4,19 +4,19 @@ from pathlib import Path
 import types
 from typing import Any, TypeVar, Union, cast, get_args, get_origin
 
-from .decorator import ConfigclassInstance
 from .format.config_format import ConfigFormat
 from .format.toml_format import TOMLFormat
+from .types import ConfigClass
 from .utils import is_configclass_type
 
-T = TypeVar("T", bound=ConfigclassInstance)
+T = TypeVar("T", bound=ConfigClass)
 
 
 class ConfigParser:
     def __init__(
         self,
         config_path: Path | str,
-        *configs: type[ConfigclassInstance[Any]],
+        *configs: type[ConfigClass[Any]],
         create_noexist: bool = False,
         format: ConfigFormat | None = None,
     ) -> None:
@@ -59,7 +59,7 @@ class ConfigParser:
 
     @staticmethod
     def _get_class_fields(
-        config_class: type[ConfigclassInstance[Any]],
+        config_class: type[ConfigClass[Any]],
     ) -> dict[str, Any]:
         class_data: dict[str, Any] = {}
 
@@ -94,7 +94,7 @@ class ConfigParser:
 
             if is_dataclass(field_type):
                 return ConfigParser._get_class_fields(
-                    cast(type[ConfigclassInstance], field_type)
+                    cast(type[ConfigClass], field_type)
                 )
             else:
                 return "No default value exists, needs to be provided manually"
@@ -109,7 +109,7 @@ class ConfigParser:
             return field_serializers[field_name](value)
         elif isinstance(value, Path):
             return str(value)
-        elif isinstance(value, ConfigclassInstance):
+        elif isinstance(value, ConfigClass):
             return ConfigParser._get_class_fields(type(value))
         return value
 
@@ -122,8 +122,8 @@ class ConfigParser:
                 return type_args[0]
         return field_type
 
-    def _get_root_configs(self) -> list[type[ConfigclassInstance]]:
-        nested_configs = set[type[ConfigclassInstance]]()
+    def _get_root_configs(self) -> list[type[ConfigClass]]:
+        nested_configs = set[type[ConfigClass]]()
         for config_class in self._configs:
             for field in fields(config_class):
                 field_type = ConfigParser._unwrap_optional(field.type)
@@ -134,9 +134,7 @@ class ConfigParser:
 
     def _convert_field_value(self, value: Any, field_type: type) -> Any:
         if is_dataclass(field_type):
-            return self._parse_config(
-                cast(type[ConfigclassInstance], field_type), value
-            )
+            return self._parse_config(cast(type[ConfigClass], field_type), value)
         elif field_type is bool and not isinstance(value, bool):
             return self._parse_bool(value)
         elif isinstance(field_type, type) and not isinstance(value, field_type):
