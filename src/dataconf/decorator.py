@@ -5,7 +5,6 @@ from typing import (
     overload,
 )
 
-from .state import _registry as registry
 from .types import ConfigclassInstance, ConfigSpec, FieldDeserializer, FieldSerializer
 
 _T = TypeVar("_T")
@@ -31,8 +30,6 @@ def _apply_config[_T](  # noqa: UP049
         field_deserialzers=field_deserialzers or {},
         field_serializers=field_serializers or {},
     )
-
-    registry.register(cls.__name__, cast(type[ConfigclassInstance[_T]], cls))
 
     return cast(type[ConfigclassInstance[_T]], cls)
 
@@ -60,7 +57,9 @@ def configclass[_T](  # noqa: UP049
     field_name_mappings: Mapping[str, str] | None = None,
     field_deserialzers: Mapping[str, FieldDeserializer] | None = None,
     field_serializers: Mapping[str, FieldSerializer] | None = None,
-) -> type[ConfigclassInstance[_T]] | Callable[[type[_T]], type[ConfigclassInstance[_T]]]:
+) -> (
+    type[ConfigclassInstance[_T]] | Callable[[type[_T]], type[ConfigclassInstance[_T]]]
+):
     if cls is not None:
         return _apply_config(
             cls,

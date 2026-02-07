@@ -1,6 +1,5 @@
 from collections.abc import Mapping
 from dataclasses import MISSING, fields, is_dataclass
-from os import name
 from pathlib import Path
 import types
 from typing import Any, TypeVar, Union, cast, get_args, get_origin
@@ -8,7 +7,6 @@ from typing import Any, TypeVar, Union, cast, get_args, get_origin
 from .decorator import ConfigclassInstance
 from .format.config_format import ConfigFormat
 from .format.toml_format import TOMLFormat
-from .state import _registry as registry
 from .utils import is_configclass_type
 
 T = TypeVar("T", bound=ConfigclassInstance)
@@ -16,7 +14,11 @@ T = TypeVar("T", bound=ConfigclassInstance)
 
 class ConfigParser:
     def __init__(
-        self, config_path: Path | str, create_noexist: bool = False, format: ConfigFormat | None = None
+        self,
+        config_path: Path | str,
+        *configs: type[ConfigclassInstance[Any]],
+        create_noexist: bool = False,
+        format: ConfigFormat | None = None,
     ) -> None:
         if format is None:
             format = TOMLFormat()
@@ -27,6 +29,13 @@ class ConfigParser:
 
         self._config_path = base_path.with_suffix(format.extension)
         self._format = format
+        self._configs = sorted(
+            configs,
+            key=lambda cls: (
+                0 if cls.__config__.top_level else 1,
+                cls.__config__.name.casefold(),
+            ),
+        )
         self._config = self._read_config()
 
     def _read_config(self) -> dict[str, dict[str, Any]]:
@@ -49,7 +58,9 @@ class ConfigParser:
         return config_data
 
     @staticmethod
-    def _get_class_fields(config_class: type[ConfigclassInstance[Any]]) -> dict[str, Any]:
+    def _get_class_fields(
+        config_class: type[ConfigclassInstance[Any]],
+    ) -> dict[str, Any]:
         class_data: dict[str, Any] = {}
 
         field_mappings = {}
@@ -65,7 +76,9 @@ class ConfigParser:
             if value is None:
                 continue
 
-            value = ConfigParser._serialize_field_value(value, field.name, field_serializers)
+            value = ConfigParser._serialize_field_value(
+                value, field.name, field_serializers
+            )
             class_data[key] = value
 
         return class_data
@@ -80,12 +93,16 @@ class ConfigParser:
             field_type = ConfigParser._unwrap_optional(field.type)
 
             if is_dataclass(field_type):
-                return ConfigParser._get_class_fields(cast(type[ConfigclassInstance], field_type))
+                return ConfigParser._get_class_fields(
+                    cast(type[ConfigclassInstance], field_type)
+                )
             else:
                 return "No default value exists, needs to be provided manually"
 
     @staticmethod
-    def _serialize_field_value(value: Any, field_name: str, field_serializers: Mapping[str, Any]) -> Any:
+    def _serialize_field_value(
+        value: Any, field_name: str, field_serializers: Mapping[str, Any]
+    ) -> Any:
         if value is None:
             return None
         if field_name in field_serializers:
@@ -106,22 +123,20 @@ class ConfigParser:
         return field_type
 
     def _get_root_configs(self) -> list[type[ConfigclassInstance]]:
-        all_configs = registry.get_all_registered()
-        all_configs = sorted(
-            all_configs, key=lambda cls: (0 if cls.__config__.top_level else 1, cls.__config__.name.casefold())
-        )
         nested_configs = set[type[ConfigclassInstance]]()
-        for config_class in all_configs:
+        for config_class in self._configs:
             for field in fields(config_class):
                 field_type = ConfigParser._unwrap_optional(field.type)
                 if is_configclass_type(field_type):
                     nested_configs.add(field_type)
 
-        return [c for c in all_configs if c not in nested_configs]
+        return [c for c in self._configs if c not in nested_configs]
 
     def _convert_field_value(self, value: Any, field_type: type) -> Any:
         if is_dataclass(field_type):
-            return self._parse_config(cast(type[ConfigclassInstance], field_type), value)
+            return self._parse_config(
+                cast(type[ConfigclassInstance], field_type), value
+            )
         elif field_type is bool and not isinstance(value, bool):
             return self._parse_bool(value)
         elif isinstance(field_type, type) and not isinstance(value, field_type):
@@ -135,8 +150,10 @@ class ConfigParser:
         return bool(value)
 
     def _parse_config(self, config_class: type[T], section_data: dict[str, Any]) -> T:
-        if not registry.is_registered(config_class.__name__):
-            raise ValueError(f"Config class {config_class.__name__} is not registered")
+        if config_class not in self._configs:
+            raise ValueError(
+                f"Config class {config_class.__name__} was not provided to this parser"
+            )
 
         field_mappings = config_class.__config__.field_mappings
         field_deserializers = config_class.__config__.field_deserialzers
