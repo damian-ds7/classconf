@@ -1,14 +1,21 @@
 from collections.abc import Callable, Mapping
 from dataclasses import Field, dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeVar, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Protocol,
+    TypeVar,
+    runtime_checkable,
+)
 
 if TYPE_CHECKING:
     from .parser import ConfigParser
 
 
-class FieldDeserializer(Protocol):
-    def __call__(self, value: Any, /, *, parser: ConfigParser) -> Any: ...
-
+type FieldDeserializer = Deser1 | Deser2
+type Deser1 = Callable[[Any], Any]
+type Deser2 = Callable[[Any, ConfigParser], Any]
 
 type FieldSerializer = Callable[[Any], Any]
 
