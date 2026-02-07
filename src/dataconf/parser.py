@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from dataclasses import MISSING, fields, is_dataclass
 from pathlib import Path
 import types
-from typing import Any, TypeVar, Union, cast, get_args, get_origin
+from typing import Any, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from .format.config_format import ConfigFormat
 from .format.toml_format import TOMLFormat
@@ -113,10 +113,12 @@ class ConfigParser:
 
         field_mappings = config_class.__config__.field_mappings
         field_serializers = config_class.__config__.field_serializers
+        resolved_types = get_type_hints(config_class, include_extras=True)
 
         for field in fields(config_class):
             key = field_mappings.get(field.name, field.name)
-            value = ConfigParser._get_field_default_value(field)
+            field_type = ConfigParser._unwrap_optional(resolved_types[field.name])
+            value = ConfigParser._get_field_default_value(field, field_type)
 
             value = ConfigParser._serialize_field_value(
                 value, field.name, field_serializers
@@ -126,20 +128,14 @@ class ConfigParser:
         return class_data
 
     @staticmethod
-    def _get_field_default_value(field: Any) -> Any:
+    def _get_field_default_value(field: Any, field_type: Any) -> Any:
         if field.default is not MISSING:
             return field.default
         elif field.default_factory is not MISSING:
             return field.default_factory()
-        else:
-            field_type = ConfigParser._unwrap_optional(field.type)
-
-            if is_dataclass(field_type):
-                return ConfigParser._get_class_fields(
-                    cast(type[ConfigClass], field_type)
-                )
-            else:
-                return None
+        elif is_dataclass(field_type):
+            return ConfigParser._get_class_fields(cast(type[ConfigClass], field_type))
+        return None
 
     @staticmethod
     def _serialize_field_value(
@@ -165,8 +161,9 @@ class ConfigParser:
     def _get_root_configs(self) -> list[type[ConfigClass]]:
         nested_configs = set[type[ConfigClass]]()
         for config_class in self._configs:
+            resolved_types = get_type_hints(config_class, include_extras=True)
             for field in fields(config_class):
-                field_type = ConfigParser._unwrap_optional(field.type)
+                field_type = ConfigParser._unwrap_optional(resolved_types[field.name])
                 if is_configclass_type(field_type):
                     nested_configs.add(field_type)
 
@@ -188,6 +185,7 @@ class ConfigParser:
         field_deserializers = config_class.__config__.field_deserialzers
         kwargs = {}
 
+        resolved_types = get_type_hints(config_class, include_extras=True)
         for field in fields(config_class):
             key = field_mappings.get(field.name, field.name)
 
@@ -201,7 +199,7 @@ class ConfigParser:
             if field.name in field_deserializers:
                 value = field_deserializers[field.name](value, parser=self)
             else:
-                field_type = ConfigParser._unwrap_optional(field.type)
+                field_type = ConfigParser._unwrap_optional(resolved_types[field.name])
                 value = self._convert_field_value(value, field_type)
 
             kwargs[field.name] = value
