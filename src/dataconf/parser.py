@@ -16,6 +16,10 @@ class InvalidConfigClassError(TypeError):
     pass
 
 
+class MultipleTopLevelConfigError(TypeError):
+    pass
+
+
 class ConfigParser:
     """Parse config files into registered dataclasses."""
 
@@ -44,22 +48,39 @@ class ConfigParser:
         self._config_path = config_path
         self._format = format
 
-        invalid_configs = [cls for cls in configs if not is_configclass_type(cls)]
+        self._add_configs(*configs)
+        self._config = self._read_config()
+
+    def _add_configs(self, *configs: type[ConfigClass]) -> None:
+        invalid_configs: list[type] = []
+        toplevel_configs: list[type] = []
+
+        for cls in configs:
+            if not is_configclass_type(cls):
+                invalid_configs.append(cls)
+
+            if cls.__config__.top_level:
+                toplevel_configs.append(cls)
+
         if invalid_configs:
-            invalid_names = ", ".join(cls.__name__ for cls in invalid_configs)
+            invalid = ", ".join(cls.__name__ for cls in invalid_configs)
             raise InvalidConfigClassError(
-                f"Config classes must use @configclass: {invalid_names}"
+                f"Config classes must use @configclass: {invalid}"
             )
 
-        typed_configs = cast(list[type[ConfigClass[Any]]], list(configs))
+        if len(toplevel_configs) > 1:
+            toplevel = ", ".join(cls.__name__ for cls in toplevel_configs)
+            raise MultipleTopLevelConfigError(
+                f"Only one top-level config class is allowed; found: {toplevel}"
+            )
+
         self._configs = sorted(
-            typed_configs,
+            configs,
             key=lambda cls: (
                 0 if cls.__config__.top_level else 1,
                 cls.__config__.name.casefold(),
             ),
         )
-        self._config = self._read_config()
 
     def _read_config(self) -> dict[str, dict[str, Any]]:
         config_data = self._format.read(self._config_path)
@@ -191,6 +212,9 @@ class ConfigParser:
             kwargs[field.name] = value
 
         return cast(T, config_class(**kwargs))
+
+    def add(self, *configs: type[Any]) -> None:
+        self._add_configs(*configs, *self._configs)
 
     def get(self, config_class: type[T]) -> T:
         """
