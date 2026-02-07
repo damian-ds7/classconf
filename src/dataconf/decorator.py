@@ -18,7 +18,7 @@ def _apply_config[_T](  # noqa: UP049
     field_name_mappings: Mapping[str, str] | None,
     field_deserialzers: Mapping[str, FieldDeserializer] | None,
     field_serializers: Mapping[str, FieldSerializer] | None,
-) -> type[ConfigClass[_T]]:
+) -> type[_T]:
     resolved_name = name or cls.__name__
     if not top_level and resolved_name == "":
         raise ValueError("name can't be empty in a non-top-level package")
@@ -31,11 +31,11 @@ def _apply_config[_T](  # noqa: UP049
         field_serializers=field_serializers or {},
     )
 
-    return cast(type[ConfigClass[_T]], cls)
+    return cls
 
 
 @overload
-def configclass[_T](cls: type[_T]) -> type[ConfigClass[_T]]: ...  # noqa: UP049
+def configclass[_T](cls: type[_T]) -> type[_T]: ...  # noqa: UP049
 
 
 @overload
@@ -46,7 +46,7 @@ def configclass(
     field_name_mappings: Mapping[str, str] | None = None,
     field_deserialzers: Mapping[str, FieldDeserializer] | None = None,
     field_serializers: Mapping[str, FieldSerializer] | None = None,
-) -> Callable[[type[_T]], type[ConfigClass[_T]]]: ...
+) -> Callable[[type[_T]], type[_T]]: ...
 
 
 def configclass[_T](  # noqa: UP049
@@ -57,7 +57,7 @@ def configclass[_T](  # noqa: UP049
     field_name_mappings: Mapping[str, str] | None = None,
     field_deserialzers: Mapping[str, FieldDeserializer] | None = None,
     field_serializers: Mapping[str, FieldSerializer] | None = None,
-) -> type[ConfigClass[_T]] | Callable[[type[_T]], type[ConfigClass[_T]]]:
+) -> type[_T] | Callable[[type[_T]], type[_T]]:
     if cls is not None:
         return _apply_config(
             cls,
@@ -70,7 +70,7 @@ def configclass[_T](  # noqa: UP049
 
     def decorator(
         inner_cls: type[_T],
-    ) -> type[ConfigClass[_T]]:
+    ) -> type[_T]:
         return _apply_config(
             inner_cls,
             top_level=top_level,

@@ -12,10 +12,23 @@ def field_parser(value: str, **_: Any) -> int:
 
 @configclass(field_deserialzers={"field": field_parser})
 @dataclass
-class Example:
+class Example_one:
     field: str = "value"
 
 
-print(Example().__config__)
+@configclass
+@dataclass
+class Example_two:
+    field: str = "value"
 
-parser = ConfigParser("config", format=TOMLFormat(), create_noexist=True)
+
+parser = ConfigParser(
+    "config", Example_one, Example_two, format=TOMLFormat(), create_noexist=True
+)
+
+e = parser.get(Example_two)
+print(e.field)
+
+
+def print_field(e: Example_one):
+    print(e.field)
