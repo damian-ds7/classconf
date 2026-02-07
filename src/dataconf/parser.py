@@ -1,16 +1,50 @@
 from collections.abc import Mapping
 from dataclasses import MISSING, fields, is_dataclass
+import inspect
 from pathlib import Path
 import types
-from typing import Any, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import (
+    Any,
+    TypeGuard,
+    TypeVar,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from .format.config_format import ConfigFormat
 from .format.toml_format import TOMLFormat
-from .types import ConfigClass
+from .types import ConfigClass, Deser1, Deser2, FieldDeserializer
 from .utils import is_configclass_type
 from .exceptions import MultipleTopLevelConfigError, InvalidConfigClassError
 
 T = TypeVar("T")
+
+
+def wants_parser(d: FieldDeserializer) -> TypeGuard[Deser2]:
+    try:
+        sig = inspect.signature(d)
+    except TypeError, ValueError:
+        return True
+
+    params = list(sig.parameters.values())
+
+    positional = [
+        p
+        for p in params
+        if p.kind
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    has_varargs = any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params)
+    return has_varargs or len(positional) >= 2
+
+
+def apply_deserializer(d: FieldDeserializer, value: Any, parser: ConfigParser) -> Any:
+    if wants_parser(d):
+        return d(value, parser)
+    return cast(Deser1, d)(value)
 
 
 class ConfigParser:
@@ -190,7 +224,7 @@ class ConfigParser:
             value = section_data[key]
 
             if field.name in field_deserializers:
-                value = field_deserializers[field.name](value, parser=self)
+                value = apply_deserializer(field_deserializers[field.name], value, self)
             else:
                 field_type = ConfigParser._unwrap_optional(resolved_types[field.name])
                 value = self._convert_field_value(value, field_type)
