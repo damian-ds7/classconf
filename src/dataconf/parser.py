@@ -252,9 +252,8 @@ class ConfigParser:
             return self._parse_config(cast_class, config_data)
 
         section_name = cast_class.__config__.name
-        config_data = self._config[section_name]
-
         if section_name not in self._config:
-            raise ValueError(f"Missing {section_name} configuration from config file")
+            raise KeyError(f"Missing {section_name} configuration from config file")
 
+        config_data = self._config[section_name]
         return self._parse_config(cast_class, config_data)
