@@ -1,7 +1,7 @@
 import unittest
 from dataclasses import dataclass
 
-from dataconf.decorator import configclass
+from dataconf import configclass
 
 from .helpers import as_config_class
 

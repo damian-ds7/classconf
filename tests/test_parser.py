@@ -6,10 +6,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Protocol, runtime_checkable
 
-from dataconf.decorator import configclass
-from dataconf.format.json_format import JSONFormat
-from dataconf.format.toml_format import TOMLFormat
-from dataconf.parser import ConfigParser
+from dataconf import ConfigParser, configclass
+from dataconf.format import JSONFormat, TOMLFormat
 
 
 class TestConfigParser(unittest.TestCase):
