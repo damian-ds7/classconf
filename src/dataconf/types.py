@@ -20,14 +20,6 @@ type Deser2 = Callable[[Any, ConfigParser], Any]
 
 type FieldSerializer = Callable[[Any], Any]
 
-_T_co = TypeVar("_T_co", covariant=True)
-
-
-@runtime_checkable
-class ConfigClass(Protocol[_T_co]):
-    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
-    __config__: ClassVar[ConfigSpec]
-
 
 ConfigSpec = NamedTuple(
     "ConfigSpec",
@@ -39,3 +31,11 @@ ConfigSpec = NamedTuple(
         ("field_serializers", Mapping[str, FieldSerializer]),
     ],
 )
+
+_T_co = TypeVar("_T_co", covariant=True)
+
+
+@runtime_checkable
+class ConfigClass(Protocol[_T_co]):
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
+    __config__: ClassVar[ConfigSpec]
