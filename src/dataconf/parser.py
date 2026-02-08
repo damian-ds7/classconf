@@ -85,8 +85,7 @@ class ConfigParser:
         for cls in configs:
             if not is_configclass_type(cls):
                 invalid_configs.append(cls)
-
-            if cls.__config__.top_level:
+            elif cls.__config__.top_level:
                 toplevel_configs.append(cls)
 
         if invalid_configs:
