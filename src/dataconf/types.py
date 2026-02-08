@@ -1,9 +1,10 @@
 from collections.abc import Callable, Mapping
-from dataclasses import Field, dataclass
+from dataclasses import Field
 from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    NamedTuple,
     Protocol,
     TypeVar,
     runtime_checkable,
@@ -28,10 +29,13 @@ class ConfigClass(Protocol[_T_co]):
     __config__: ClassVar[ConfigSpec]
 
 
-@dataclass
-class ConfigSpec:
-    top_level: bool
-    name: str
-    field_mappings: Mapping[str, str]
-    field_deserialzers: Mapping[str, FieldDeserializer]
-    field_serializers: Mapping[str, FieldSerializer]
+ConfigSpec = NamedTuple(
+    "ConfigSpec",
+    [
+        ("top_level", bool),
+        ("name", str),
+        ("field_mappings", Mapping[str, str]),
+        ("field_deserialzers", Mapping[str, FieldDeserializer]),
+        ("field_serializers", Mapping[str, FieldSerializer]),
+    ],
+)
