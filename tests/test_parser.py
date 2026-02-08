@@ -6,7 +6,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Protocol, runtime_checkable
 
-from dataconf import ConfigParser, configclass
+from dataconf import (
+    ConfigParser,
+    configclass,
+    InvalidConfigClassError,
+    MultipleTopLevelConfigError,
+)
 from dataconf.format import JSONFormat, TOMLFormat
 
 
@@ -309,6 +314,153 @@ class TestConfigParser(unittest.TestCase):
             parent = parser.get(ParentConfig)
             self.assertEqual(parent.child.name, "alpha")
             self.assertEqual(parent.child.size, 2)
+
+    def test_default_format_is_toml(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class DefaultFormatConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            parser = ConfigParser(config_path, DefaultFormatConfig, create_noexist=True)
+
+            self.assertIsInstance(parser._format, TOMLFormat)
+            self.assertTrue(config_path.exists())
+
+    def test_missing_file_raises(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class MissingFileConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "missing.json"
+            with self.assertRaises(FileNotFoundError):
+                ConfigParser(config_path, MissingFileConfig, format=JSONFormat())
+
+    def test_invalid_config_class_rejected(self) -> None:
+        @dataclass
+        class InvalidConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            with self.assertRaises(InvalidConfigClassError):
+                ConfigParser(
+                    config_path, InvalidConfig, format=JSONFormat(), create_noexist=True
+                )
+
+    def test_multiple_top_level_rejected(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class TopOne:
+            value: int = 1
+
+        @configclass(top_level=True)
+        @dataclass
+        class TopTwo:
+            value: int = 2
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            with self.assertRaises(MultipleTopLevelConfigError):
+                ConfigParser(
+                    config_path,
+                    TopOne,
+                    TopTwo,
+                    format=JSONFormat(),
+                    create_noexist=True,
+                )
+
+    def test_missing_key_raises(self) -> None:
+        @configclass(name="app")
+        @dataclass
+        class RequiredConfig:
+            count: int
+            label: str
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            config_path.write_text(json.dumps({"app": {"count": 1}}))
+            parser = ConfigParser(
+                config_path,
+                RequiredConfig,
+                format=JSONFormat(),
+                create_noexist=False,
+            )
+
+            with self.assertRaises(KeyError):
+                parser.get(RequiredConfig)
+
+    def test_add_includes_new_configs(self) -> None:
+        @configclass(name="alpha")
+        @dataclass
+        class AlphaConfig:
+            value: int
+
+        @configclass(name="beta")
+        @dataclass
+        class BetaConfig:
+            label: str
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            config_path.write_text(
+                json.dumps({"alpha": {"value": 1}, "beta": {"label": "ok"}})
+            )
+            parser = ConfigParser(
+                config_path,
+                AlphaConfig,
+                format=JSONFormat(),
+                create_noexist=False,
+            )
+
+            parser.add(BetaConfig)
+            beta = parser.get(BetaConfig)
+            self.assertEqual(beta.label, "ok")
+
+    def test_get_missing_config_class_raises(self) -> None:
+        @configclass(name="alpha")
+        @dataclass
+        class AlphaConfig:
+            value: int = 1
+
+        @configclass(name="beta")
+        @dataclass
+        class BetaConfig:
+            value: int = 2
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            parser = ConfigParser(
+                config_path,
+                AlphaConfig,
+                format=JSONFormat(),
+                create_noexist=True,
+            )
+
+            with self.assertRaises(ValueError):
+                parser.get(BetaConfig)
+
+    def test_missing_section_raises(self) -> None:
+        @configclass(name="alpha")
+        @dataclass
+        class AlphaConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            config_path.write_text(json.dumps({"other": {"value": 1}}))
+            parser = ConfigParser(
+                config_path,
+                AlphaConfig,
+                format=JSONFormat(),
+                create_noexist=False,
+            )
+
+            with self.assertRaises(KeyError):
+                parser.get(AlphaConfig)
 
 
 if __name__ == "__main__":

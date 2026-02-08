@@ -36,6 +36,14 @@ class TestConfigClassDecorator(unittest.TestCase):
         self.assertEqual(spec.field_deserialzers, {"count": deserialize_count})
         self.assertEqual(spec.field_serializers, {"count": serialize_count})
 
+    def test_empty_name_non_toplevel_rejected(self) -> None:
+        @dataclass
+        class ExampleConfig:
+            value: int = 1
+
+        with self.assertRaises(ValueError):
+            configclass(top_level=False, name="")(ExampleConfig)
+
 
 if __name__ == "__main__":
     unittest.main()
