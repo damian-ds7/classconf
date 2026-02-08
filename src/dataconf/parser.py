@@ -26,7 +26,7 @@ T = TypeVar("T")
 def wants_parser(d: FieldDeserializer) -> TypeGuard[Deser2]:
     try:
         sig = inspect.signature(d)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return True
 
     params = list(sig.parameters.values())
@@ -41,7 +41,7 @@ def wants_parser(d: FieldDeserializer) -> TypeGuard[Deser2]:
     return has_varargs or len(positional) >= 2
 
 
-def apply_deserializer(d: FieldDeserializer, value: Any, parser: ConfigParser) -> Any:
+def apply_deserializer(d: FieldDeserializer, value: Any, parser: "ConfigParser") -> Any:
     if wants_parser(d):
         return d(value, parser)
     return cast(Deser1, d)(value)
