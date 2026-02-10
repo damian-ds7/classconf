@@ -24,10 +24,7 @@ T = TypeVar("T")
 
 
 def wants_parser(d: FieldDeserializer) -> TypeGuard[Deser2]:
-    try:
-        sig = inspect.signature(d)
-    except (TypeError, ValueError):
-        return True
+    sig = inspect.signature(d)
 
     params = list(sig.parameters.values())
 
