@@ -76,7 +76,7 @@ class ConfigParser:
         self._config = self._read_config()
 
     @staticmethod
-    def _validate_configs(*configs: type[ConfigClass]) -> list[type[ConfigClass]]:
+    def _validate_configs(*configs: type[ConfigClass]) -> list[type[ConfigClass[Any]]]:
         invalid_configs: list[type] = []
         toplevel_configs: list[type] = []
 
@@ -114,8 +114,9 @@ class ConfigParser:
 
         return config_data
 
+    @staticmethod
     def _create_default_config(
-        self, config_classes: list[type[ConfigClass[Any]]]
+        config_classes: list[type[ConfigClass[Any]]],
     ) -> dict[str, Any]:
         config_data: dict[str, Any] = {}
 
