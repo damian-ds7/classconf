@@ -20,8 +20,6 @@ def _apply_config[_T](  # noqa: UP049
     field_serializers: Mapping[str, FieldSerializer] | None,
 ) -> type[_T]:
     resolved_name = name or cls.__name__
-    if not top_level and resolved_name == "":
-        raise ValueError("name can't be empty in a non-top-level package")
 
     cast(type[ConfigClass[_T]], cls).__config__ = ConfigSpec(
         top_level=top_level,
