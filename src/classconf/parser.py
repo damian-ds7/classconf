@@ -72,10 +72,11 @@ class ConfigParser:
         self._config_path = config_path
         self._format = format
 
-        self._add_configs(*configs)
+        self._configs = self._validate_configs(*configs)
         self._config = self._read_config()
 
-    def _add_configs(self, *configs: type[ConfigClass]) -> None:
+    @staticmethod
+    def _validate_configs(*configs: type[ConfigClass]) -> list[type[ConfigClass]]:
         invalid_configs: list[type] = []
         toplevel_configs: list[type] = []
 
@@ -97,7 +98,7 @@ class ConfigParser:
                 f"Only one top-level config class is allowed; found: {toplevel}"
             )
 
-        self._configs = sorted(
+        return sorted(
             configs,
             key=lambda cls: (
                 0 if cls.__config__.top_level else 1,
@@ -228,7 +229,7 @@ class ConfigParser:
         return cast(T, config_class(**kwargs))
 
     def add(self, *configs: type[Any]) -> None:
-        self._add_configs(*configs, *self._configs)
+        self._configs = self._validate_configs(*configs, *self._configs)
 
     def get(self, config_class: type[T]) -> T:
         """
