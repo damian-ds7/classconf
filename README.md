@@ -1,5 +1,5 @@
 [![codecov](https://codecov.io/gh/damian-ds7/classconf/graph/badge.svg?token=UTJXJHHEZQ)](https://codecov.io/gh/damian-ds7/classconf)
-[![PyPI version](https://img.shields.io/pypi/v/classconf.svg)](https://pypi.org/project/classconf/)
+![PyPI - Version](https://img.shields.io/pypi/v/classconf)
 
 # classconf
 
