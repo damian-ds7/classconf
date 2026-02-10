@@ -109,14 +109,17 @@ class ConfigParser:
     def _read_config(self) -> dict[str, Any]:
         config_data = self._format.read(self._config_path)
         if config_data is None:
-            return self._create_default_config()
+            config_data = self._create_default_config(self._get_root_configs())
+            self._format.write(self._config_path, config_data)
 
         return config_data
 
-    def _create_default_config(self) -> dict[str, Any]:
+    def _create_default_config(
+        self, config_classes: list[type[ConfigClass[Any]]]
+    ) -> dict[str, Any]:
         config_data: dict[str, Any] = {}
 
-        for config_class in self._get_root_configs():
+        for config_class in config_classes:
             config_class_data = ConfigParser._get_class_fields(config_class)
 
             if config_class.__config__.top_level:
@@ -124,8 +127,6 @@ class ConfigParser:
             else:
                 section_name = config_class.__config__.name
                 config_data[section_name] = config_class_data
-
-        self._format.write(self._config_path, config_data)
 
         return config_data
 
@@ -180,7 +181,7 @@ class ConfigParser:
                 return type_args[0]
         return field_type
 
-    def _get_root_configs(self) -> list[type[ConfigClass]]:
+    def _get_root_configs(self) -> list[type[ConfigClass[Any]]]:
         nested_configs = set[type[ConfigClass]]()
         for config_class in self._configs:
             resolved_types = get_type_hints(config_class, include_extras=True)
