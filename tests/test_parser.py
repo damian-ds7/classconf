@@ -47,6 +47,27 @@ class TestConfigParser(unittest.TestCase):
             self.assertEqual(alpha.label, "alpha")
             self.assertEqual(beta.count, 5)
 
+    def test_union_type_field(self) -> None:
+        @configclass(name="alpha")
+        @dataclass
+        class AlphaConfig:
+            label: str | None = None
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            parser = ConfigParser(
+                config_path,
+                AlphaConfig,
+                format=JSONFormat(),
+                create_noexist=True,
+            )
+
+            expected = json.dumps({"alpha": {"label": None}}, indent=2)
+            self.assertEqual(config_path.read_text(), expected)
+
+            alpha = parser.get(AlphaConfig)
+            self.assertEqual(alpha.label, None)
+
     def test_top_level_with_nested_types(self) -> None:
         @configclass
         @dataclass
