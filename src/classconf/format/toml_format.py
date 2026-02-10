@@ -17,7 +17,7 @@ class TOMLFormat(ConfigFormat):
         """
         self.none_value = none_value
 
-    def read(self, path: Path) -> dict[str, dict[str, Any]] | None:
+    def read(self, path: Path) -> dict[str, Any] | None:
         if not path.exists():
             return None
 
