@@ -6,11 +6,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Protocol, runtime_checkable
 
+import rtoml
+
 from classconf import (
     ConfigParser,
-    configclass,
     InvalidConfigClassError,
     MultipleTopLevelConfigError,
+    configclass,
 )
 from classconf.format import JSONFormat, TOMLFormat
 
@@ -229,7 +231,7 @@ class TestConfigParser(unittest.TestCase):
                 {"metrics": {"count": "3x"}},
             )
 
-    def test_deserializers_without_parser(self) -> None:
+    def test_deserializers_without_parser_json(self) -> None:
         def deserialize_num(value: str, **_: Any) -> int:
             return int(value.rstrip("x"))
 
@@ -248,6 +250,31 @@ class TestConfigParser(unittest.TestCase):
                 config_path,
                 MetricsConfig,
                 format=JSONFormat(),
+                create_noexist=False,
+            )
+
+            config = parser.get(MetricsConfig)
+            self.assertEqual(config.count, 8)
+
+    def test_deserializers_without_parser_toml(self) -> None:
+        def deserialize_num(value: str, **_: Any) -> int:
+            return int(value.rstrip("x"))
+
+        @configclass(
+            name="metrics",
+            field_deserialzers={"count": deserialize_num},
+        )
+        @dataclass
+        class MetricsConfig:
+            count: int
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            config_path.write_text(rtoml.dumps({"metrics": {"count": "8x"}}))
+            parser = ConfigParser(
+                config_path,
+                MetricsConfig,
+                format=TOMLFormat(),
                 create_noexist=False,
             )
 
