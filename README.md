@@ -146,25 +146,25 @@ from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
 from classconf import ConfigParser, configclass
-from classconf.format import JSONFormat
+from classconf.format import TOMLFormat
 
 
 @runtime_checkable
 class DatabaseConfig(Protocol):
-    driver: str
+    driver: ClassVar[str]
 
 
 @configclass(name="sqlite")
 @dataclass
 class SQLiteConfig:
-    driver: str = "sqlite"
+    driver: ClassVar[str] = "sqlite"
     path: str = "app.db"
 
 
 @configclass(name="postgres")
 @dataclass
 class PostgresConfig:
-    driver: str = "postgres"
+    driver: ClassVar[str] = "postgres"
     host: str = "localhost"
     port: int = 5432
 
