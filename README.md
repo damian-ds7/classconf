@@ -213,6 +213,40 @@ path = "app.db"
 
 ```
 
+## Generating configs from instances
+
+`ConfigParser.generate_config` writes a config file from config class instances.
+This is useful for preset generation when a CLI or UI offers a few known
+configurations and only the selected one should be saved.
+
+```python
+from dataclasses import dataclass
+from classconf import ConfigParser, configclass
+from classconf.format import JSONFormat
+
+
+@configclass(name="logging")
+@dataclass
+class LoggingConfig:
+    level: str = "INFO"
+    file: str = "app.log"
+
+
+preset = "debug"  # could come from CLI/UI
+
+if preset == "debug":
+    config = LoggingConfig(level="DEBUG", file="debug.log")
+else:
+    config = LoggingConfig(level="INFO", file="app.log")
+
+ConfigParser.generate_config(
+    "logging_preset.json",
+    config,
+    format=JSONFormat(),
+    override_existing=True,
+)
+```
+
 ## Adding configs later
 
 ```python
