@@ -157,10 +157,10 @@ class ConfigParser:
     def _get_field_default_value(field: Any, field_type: Any) -> Any:
         if field.default is not MISSING:
             return field.default
-        elif field.default_factory is not MISSING:
-            return field.default_factory()
         elif is_dataclass(field_type):
             return ConfigParser._get_class_fields(cast(type[ConfigClass], field_type))
+        elif field.default_factory is not MISSING:
+            return field.default_factory()
         return None
 
     @staticmethod
@@ -171,8 +171,6 @@ class ConfigParser:
             return field_serializers[field_name](value)
         elif isinstance(value, Path):
             return str(value)
-        elif isinstance(value, ConfigClass):
-            return ConfigParser._get_class_fields(type(value))
         return value
 
     @staticmethod
