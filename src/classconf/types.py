@@ -10,7 +10,7 @@ from typing import (
     runtime_checkable,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .parser import ConfigParser
 
 
