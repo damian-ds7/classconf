@@ -192,7 +192,7 @@ parser = ConfigParser(
     AppConfig,
     SQLiteConfig,
     PostgresConfig,
-    format=JSONFormat(),
+    format=TOMLFormat(),
     create_noexist=True,
 )
 
