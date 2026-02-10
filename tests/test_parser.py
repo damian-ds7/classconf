@@ -6,13 +6,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Protocol, runtime_checkable
 
-from dataconf import (
+from classconf import (
     ConfigParser,
     configclass,
     InvalidConfigClassError,
     MultipleTopLevelConfigError,
 )
-from dataconf.format import JSONFormat, TOMLFormat
+from classconf.format import JSONFormat, TOMLFormat
 
 
 class TestConfigParser(unittest.TestCase):
