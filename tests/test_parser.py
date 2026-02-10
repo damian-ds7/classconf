@@ -510,6 +510,118 @@ class TestConfigParser(unittest.TestCase):
             with self.assertRaises(KeyError):
                 parser.get(AlphaConfig)
 
+    def test_generate_config_writes_instances(self) -> None:
+        def serialize_count(value: int) -> str:
+            return f"{value}x"
+
+        @configclass(
+            name="metrics",
+            field_name_mappings={"count": "count_value"},
+            field_serializers={"count": serialize_count},
+        )
+        @dataclass
+        class MetricsConfig:
+            count: int = 7
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            ConfigParser.generate_config(
+                config_path,
+                MetricsConfig(count=9),
+                format=JSONFormat(),
+                override_existing=False,
+            )
+
+            self.assertEqual(
+                json.loads(config_path.read_text()),
+                {"metrics": {"count_value": "9x"}},
+            )
+
+    def test_generate_config_top_level(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class TopConfig:
+            name: str = "demo"
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            ConfigParser.generate_config(
+                config_path,
+                TopConfig(name="prod"),
+                format=JSONFormat(),
+            )
+
+            self.assertEqual(json.loads(config_path.read_text()), {"name": "prod"})
+
+    def test_generate_config_requires_override(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class TopConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            config_path.write_text("{}")
+
+            with self.assertRaises(FileExistsError):
+                ConfigParser.generate_config(
+                    config_path,
+                    TopConfig(),
+                    format=JSONFormat(),
+                    override_existing=False,
+                )
+
+            ConfigParser.generate_config(
+                config_path,
+                TopConfig(value=2),
+                format=JSONFormat(),
+                override_existing=True,
+            )
+
+            self.assertEqual(json.loads(config_path.read_text()), {"value": 2})
+
+    def test_generate_config_duplicate_instances(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class TopConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            with self.assertRaises(ValueError):
+                ConfigParser.generate_config(
+                    config_path,
+                    TopConfig(),
+                    TopConfig(value=2),
+                    format=JSONFormat(),
+                )
+
+    def test_generate_config_invalid_instance(self) -> None:
+        @dataclass
+        class InvalidConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            with self.assertRaises(InvalidConfigClassError):
+                ConfigParser.generate_config(
+                    config_path,
+                    InvalidConfig(),
+                    format=JSONFormat(),
+                )
+
+    def test_generate_config_defaults_to_toml(self) -> None:
+        @configclass(top_level=True)
+        @dataclass
+        class TopConfig:
+            value: int = 1
+
+        with TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            ConfigParser.generate_config(config_path, TopConfig(value=3))
+
+            self.assertEqual(rtoml.load(config_path), {"value": 3})
+
 
 if __name__ == "__main__":
     unittest.main()
