@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from dataclasses import MISSING, fields, is_dataclass
+from dataclasses import MISSING, dataclass, fields, is_dataclass
 import inspect
 from pathlib import Path
 import types
@@ -229,6 +229,53 @@ class ConfigParser:
             kwargs[field.name] = value
 
         return cast(T, config_class(**kwargs))
+
+    @staticmethod
+    def generate_config(
+        path: Path | str,
+        *configs: Any,
+        override_existing: bool = False,
+        format: ConfigFormat | None = None,
+    ) -> None:
+        config_types = [type(c) for c in configs]
+
+        if len(config_types) != len(set(config_types)):
+            raise ValueError("Duplicate instances of ConfigClass are not allowed")
+
+        types = {type(c): c for c in configs}
+
+        path = Path(path)
+
+        if path.exists() and not override_existing:
+            raise FileExistsError(f"Config file already exists: {path}")
+
+        if format is None:
+            format = TOMLFormat()
+
+        validated_types = ConfigParser._validate_configs(*types.keys())
+        config = ConfigParser._create_default_config(validated_types)
+
+        for t in validated_types:
+            curr_dict: dict[str, Any]
+            spec = t.__config__
+            if not spec.top_level:
+                curr_dict = config.get(spec.name, {})
+            else:
+                curr_dict = config
+
+            field_mappings = spec.field_mappings
+            field_serializers = spec.field_serializers
+
+            for field in fields(types[t]):
+                key = field_mappings.get(field.name, field.name)
+                value = getattr(types[t], field.name)
+
+                value = ConfigParser._serialize_field_value(
+                    value, field.name, field_serializers
+                )
+                curr_dict[key] = value
+
+        format.write(path, config)
 
     def add(self, *configs: type[Any]) -> None:
         self._configs = self._validate_configs(*configs, *self._configs)
