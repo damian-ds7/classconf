@@ -1,5 +1,4 @@
 import unittest
-from dataclasses import dataclass
 
 from classconf import configclass
 
@@ -23,7 +22,6 @@ class TestConfigClassDecorator(unittest.TestCase):
             field_deserialzers={"count": deserialize_count},
             field_serializers={"count": serialize_count},
         )
-        @dataclass
         class ExampleConfig:
             count: int = 1
 

@@ -20,12 +20,10 @@ from classconf.format import JSONFormat, TOMLFormat
 class TestConfigParser(unittest.TestCase):
     def test_separate_classes_json_format(self) -> None:
         @configclass(name="alpha")
-        @dataclass
         class AlphaConfig:
             label: str = "alpha"
 
         @configclass(name="beta")
-        @dataclass
         class BetaConfig:
             count: int = 5
 
@@ -51,7 +49,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_union_type_field(self) -> None:
         @configclass(name="alpha")
-        @dataclass
         class AlphaConfig:
             label: str | None = None
 
@@ -72,18 +69,15 @@ class TestConfigParser(unittest.TestCase):
 
     def test_top_level_with_nested_types(self) -> None:
         @configclass
-        @dataclass
         class PathsConfig:
             output_dir: Path = Path("./out")
 
         @configclass
-        @dataclass
         class FlagsConfig:
             retries: int = 3
             verbose: bool = False
 
         @configclass(top_level=True)
-        @dataclass
         class AppConfig:
             name: str = "demo"
             paths: PathsConfig = field(default_factory=PathsConfig)
@@ -108,13 +102,11 @@ class TestConfigParser(unittest.TestCase):
 
     def test_top_level_with_extra_section_toml(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class MainConfig:
             title: str = "main"
             enabled: bool = True
 
         @configclass
-        @dataclass
         class ExtraConfig:
             level: int = 2
 
@@ -136,12 +128,10 @@ class TestConfigParser(unittest.TestCase):
 
     def test_nested_name_collision_allows_lookup(self) -> None:
         @configclass(name="nested")
-        @dataclass
         class NamedNested:
             value: str = "value"
 
         @configclass(top_level=True)
-        @dataclass
         class ParentConfig:
             nested: NamedNested = field(default_factory=NamedNested)
 
@@ -159,12 +149,10 @@ class TestConfigParser(unittest.TestCase):
             self.assertEqual(nested.value, "value")
 
         @configclass
-        @dataclass
         class DefaultNested:
             value: str = "value"
 
         @configclass(top_level=True)
-        @dataclass
         class ParentDefaultConfig:
             nested: DefaultNested = field(default_factory=DefaultNested)
 
@@ -183,7 +171,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_missing_defaults_written_as_null(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class RequiredConfig:
             count: int
             label: str
@@ -213,7 +200,6 @@ class TestConfigParser(unittest.TestCase):
             name="metrics",
             field_serializers={"count": serialize_count},
         )
-        @dataclass
         class MetricsConfig:
             count: int = 3
 
@@ -239,7 +225,6 @@ class TestConfigParser(unittest.TestCase):
             name="metrics",
             field_deserialzers={"count": deserialize_num},
         )
-        @dataclass
         class MetricsConfig:
             count: int
 
@@ -264,7 +249,6 @@ class TestConfigParser(unittest.TestCase):
             name="metrics",
             field_deserialzers={"count": deserialize_num},
         )
-        @dataclass
         class MetricsConfig:
             count: int
 
@@ -288,7 +272,6 @@ class TestConfigParser(unittest.TestCase):
             size: int
 
         @configclass(name="child")
-        @dataclass
         class ChildConfig:
             name: str = "alpha"
             size: int = 2
@@ -304,7 +287,6 @@ class TestConfigParser(unittest.TestCase):
             field_deserialzers={"child": resolve_child},
             field_serializers={"child": serialize_child},
         )
-        @dataclass
         class ParentConfig:
             child: Child = field(default_factory=ChildConfig)
 
@@ -328,7 +310,6 @@ class TestConfigParser(unittest.TestCase):
             size: int
 
         @configclass(name="child")
-        @dataclass
         class ChildConfig(Child):
             name: str = "alpha"
             size: int = 2
@@ -345,7 +326,6 @@ class TestConfigParser(unittest.TestCase):
             field_deserialzers={"child": resolve_child},
             field_serializers={"child": serialize_child},
         )
-        @dataclass
         class ParentConfig:
             child: Child = field(default_factory=ChildConfig)
 
@@ -365,7 +345,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_default_format_is_toml(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class DefaultFormatConfig:
             value: int = 1
 
@@ -378,7 +357,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_missing_file_raises(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class MissingFileConfig:
             value: int = 1
 
@@ -401,12 +379,10 @@ class TestConfigParser(unittest.TestCase):
 
     def test_multiple_top_level_rejected(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class TopOne:
             value: int = 1
 
         @configclass(top_level=True)
-        @dataclass
         class TopTwo:
             value: int = 2
 
@@ -423,7 +399,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_missing_key_raises(self) -> None:
         @configclass(name="app")
-        @dataclass
         class RequiredConfig:
             count: int
             label: str
@@ -443,12 +418,10 @@ class TestConfigParser(unittest.TestCase):
 
     def test_add_includes_new_configs(self) -> None:
         @configclass(name="alpha")
-        @dataclass
         class AlphaConfig:
             value: int
 
         @configclass(name="beta")
-        @dataclass
         class BetaConfig:
             label: str
 
@@ -470,12 +443,10 @@ class TestConfigParser(unittest.TestCase):
 
     def test_get_missing_config_class_raises(self) -> None:
         @configclass(name="alpha")
-        @dataclass
         class AlphaConfig:
             value: int = 1
 
         @configclass(name="beta")
-        @dataclass
         class BetaConfig:
             value: int = 2
 
@@ -493,7 +464,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_missing_section_raises(self) -> None:
         @configclass(name="alpha")
-        @dataclass
         class AlphaConfig:
             value: int = 1
 
@@ -519,7 +489,6 @@ class TestConfigParser(unittest.TestCase):
             field_name_mappings={"count": "count_value"},
             field_serializers={"count": serialize_count},
         )
-        @dataclass
         class MetricsConfig:
             count: int = 7
 
@@ -539,7 +508,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_generate_config_top_level(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class TopConfig:
             name: str = "demo"
 
@@ -555,7 +523,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_generate_config_requires_override(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class TopConfig:
             value: int = 1
 
@@ -582,7 +549,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_generate_config_duplicate_instances(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class TopConfig:
             value: int = 1
 
@@ -612,7 +578,6 @@ class TestConfigParser(unittest.TestCase):
 
     def test_generate_config_defaults_to_toml(self) -> None:
         @configclass(top_level=True)
-        @dataclass
         class TopConfig:
             value: int = 1
 

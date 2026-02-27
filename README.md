@@ -23,13 +23,11 @@ from classconf.format import JSONFormat
 
 
 @configclass
-@dataclass
 class PathsConfig:
     output_dir: Path = Path("./out")
 
 
 @configclass(top_level=True)
-@dataclass
 class AppConfig:
     name: str = "demo"
     paths: PathsConfig = field(default_factory=PathsConfig)
@@ -112,7 +110,6 @@ def serialize_num(value: int) -> str:
     field_serializers={"count": serialize_num},
     field_name_mappings={"count": "count_value"},
 )
-@dataclass
 class MetricsConfig:
     count: int = 3
 
@@ -155,14 +152,12 @@ class DatabaseConfig(Protocol):
 
 
 @configclass(name="sqlite")
-@dataclass
 class SQLiteConfig:
     driver: ClassVar[str] = "sqlite"
     path: str = "app.db"
 
 
 @configclass(name="postgres")
-@dataclass
 class PostgresConfig:
     driver: ClassVar[str] = "postgres"
     host: str = "localhost"
@@ -182,7 +177,6 @@ def serialize_database(db: DatabaseConfig) -> str:
     field_deserialzers={"database": resolve_database},
     field_serializers={"database": serialize_database},
 )
-@dataclass
 class AppConfig:
     database: DatabaseConfig = field(default_factory=SQLiteConfig)
 
@@ -229,7 +223,6 @@ from classconf.format import JSONFormat
 
 
 @configclass(name="logging")
-@dataclass
 class LoggingConfig:
     level: str = "INFO"
     file: str = "app.log"

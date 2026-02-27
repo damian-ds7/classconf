@@ -1,7 +1,10 @@
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import (
+    Any,
     TypeVar,
     cast,
+    dataclass_transform,
     overload,
 )
 
@@ -47,6 +50,7 @@ def configclass(
 ) -> Callable[[type[_T]], type[_T]]: ...
 
 
+@dataclass_transform()
 def configclass[_T](  # noqa: UP049
     cls: type[_T] | None = None,
     *,
@@ -55,9 +59,10 @@ def configclass[_T](  # noqa: UP049
     field_name_mappings: Mapping[str, str] | None = None,
     field_deserialzers: Mapping[str, FieldDeserializer] | None = None,
     field_serializers: Mapping[str, FieldSerializer] | None = None,
+    **dataclass_kwargs: Any,
 ) -> type[_T] | Callable[[type[_T]], type[_T]]:
     if cls is not None:
-        return _apply_config(
+        cls = _apply_config(
             cls,
             top_level=top_level,
             name=name,
@@ -65,11 +70,12 @@ def configclass[_T](  # noqa: UP049
             field_deserialzers=field_deserialzers,
             field_serializers=field_serializers,
         )
+        return dataclass(**dataclass_kwargs)(cls)
 
     def decorator(
         inner_cls: type[_T],
     ) -> type[_T]:
-        return _apply_config(
+        inner_cls = _apply_config(
             inner_cls,
             top_level=top_level,
             name=name,
@@ -77,5 +83,6 @@ def configclass[_T](  # noqa: UP049
             field_deserialzers=field_deserialzers,
             field_serializers=field_serializers,
         )
+        return dataclass(**dataclass_kwargs)(inner_cls)
 
     return decorator

@@ -1,18 +1,17 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
 from classconf import ConfigParser, configclass
 from classconf.format import JSONFormat
 
 
 @configclass
-@dataclass
 class Nested:
     value: int = 1
 
 
 @configclass(top_level=True)
-@dataclass
 class AppConfig:
     name: str = "demo"
     nested: Nested = field(default_factory=Nested)
