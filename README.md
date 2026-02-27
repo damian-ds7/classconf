@@ -3,19 +3,21 @@
 
 # classconf
 
-Dataclass companion for config metadata and parsing, with a `ConfigParser` that
-generates and loads typed configs from files.
+A declarative configuration library that transforms classes into typed
+dataclasses with metadata for seamless file-based parsing and serialization.
 
 ## Core ideas
 
-- Use `@configclass` to attach config metadata to dataclasses.
-- Provide config classes to `ConfigParser`.
-- Parse config files into dataclass instances.
+- **Automatic Dataclasses**: Use `@configclass` to transform a class into a
+  dataclass.
+- **Integrated Metadata**: Attach section names, field mappings, and custom
+  logic directly to your schema.
+- **Type-Safe Parsing**: Use `ConfigParser` to load and generate typed instances
+  from configuration files.
 
 ## Basic usage
 
 ```python
-from dataclasses import dataclass
 from pathlib import Path
 
 from classconf import ConfigParser, configclass
@@ -91,7 +93,6 @@ class YAMLFormat(ConfigFormat):
 ## Field mappings, serializers, deserializers
 
 ```python
-from dataclasses import dataclass
 from classconf import ConfigParser, configclass
 from classconf.format import JSONFormat
 
@@ -139,7 +140,6 @@ when a field is typed as a protocol/ABC and a string selects which config
 section to load.
 
 ```python
-from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
 from classconf import ConfigParser, configclass
@@ -217,7 +217,6 @@ This is useful for preset generation when a CLI or UI offers a few known
 configurations and only the selected one should be saved.
 
 ```python
-from dataclasses import dataclass
 from classconf import ConfigParser, configclass
 from classconf.format import JSONFormat
 
