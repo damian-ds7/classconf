@@ -1,6 +1,6 @@
 [project]
 name = "classconf"
-version = "0.3.0"
+version = "0.3.1"
 description = "Dataclass companion for config metadata and parsing, with a ConfigParser that generates and loads configs from files."
 readme = "README.md"
 authors = [
